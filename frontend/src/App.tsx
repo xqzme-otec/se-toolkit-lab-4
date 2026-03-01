@@ -1,115 +1,88 @@
-import { useState, useEffect, FormEvent } from 'react'
-import './App.css'
+import React, { useState, useEffect } from 'react';
+import './App.css';
 
-const STORAGE_KEY = 'api_token'
-
-interface Item {
-  id: number
-  type: string
-  title: string
-  created_at: string
-}
+const API_BASE_URL = import.meta.env.VITE_API_TARGET || '/api';
 
 function App() {
-  const [token, setToken] = useState(
-    () => localStorage.getItem(STORAGE_KEY) ?? '',
-  )
-  const [draft, setDraft] = useState('')
-  const [items, setItems] = useState<Item[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [token, setToken] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [items, setItems] = useState([]);
+  const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (!token) return
+  const handleConnect = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/items/`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
 
-    setLoading(true)
-    setError(null)
+      if (response.ok) {
+        const data = await response.json();
+        setItems(data);
+        setIsAuthenticated(true);
+        setError('');
+      } else {
+        setError(`HTTP ${response.status}`);
+      }
+    } catch (err) {
+      setError('Connection failed');
+    }
+  };
 
-    fetch('/items', {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        return res.json()
-      })
-      .then((data: Item[]) => {
-        setItems(data)
-        setLoading(false)
-      })
-      .catch((err: Error) => {
-        setError(err.message)
-        setLoading(false)
-      })
-  }, [token])
+  const handleDisconnect = () => {
+    setIsAuthenticated(false);
+    setToken('');
+    setItems([]);
+  };
 
-  function handleConnect(e: FormEvent) {
-    e.preventDefault()
-    const trimmed = draft.trim()
-    if (!trimmed) return
-    localStorage.setItem(STORAGE_KEY, trimmed)
-    setToken(trimmed)
-  }
-
-  function handleDisconnect() {
-    localStorage.removeItem(STORAGE_KEY)
-    setToken('')
-    setDraft('')
-    setItems([])
-    setError(null)
-  }
-
-  if (!token) {
+  if (!isAuthenticated) {
     return (
-      <form className="token-form" onSubmit={handleConnect}>
+      <div className="app">
         <h1>API Token</h1>
-        <p>Enter your API token to connect.</p>
-        <input
-          type="password"
-          placeholder="Token"
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-        />
-        <button type="submit">Connect</button>
-      </form>
-    )
+        <div className="token-input">
+          <input
+            type="password"
+            value={token}
+            onChange={(e) => setToken(e.target.value)}
+            placeholder="Enter your API token"
+          />
+          <button onClick={handleConnect}>Connect</button>
+        </div>
+        {error && <div className="error">{error}</div>}
+      </div>
+    );
   }
 
   return (
-    <div>
-      <header className="app-header">
-        <h1>Items</h1>
-        <button className="btn-disconnect" onClick={handleDisconnect}>
-          Disconnect
-        </button>
-      </header>
-
-      {loading && <p>Loading...</p>}
-      {error && <p>Error: {error}</p>}
-
-      {!loading && !error && (
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Type</th>
-              <th>Title</th>
-              <th>Created at</th>
+    <div className="app">
+      <div className="header">
+        <h1>Items 📚</h1>
+        <button onClick={handleDisconnect}>Disconnect</button>
+      </div>
+      {error && <div className="error">{error}</div>}
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Title</th>
+            <th>Description</th>
+            <th>Type</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item: any) => (
+            <tr key={item.id}>
+              <td>{item.id}</td>
+              <td>{item.title}</td>
+              <td>{item.description}</td>
+              <td>{item.type}</td>
             </tr>
-          </thead>
-          <tbody>
-            {items.map((item) => (
-              <tr key={item.id}>
-                <td>{item.id}</td>
-                <td>{item.type}</td>
-                <td>{item.title}</td>
-                <td>{item.created_at}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+          ))}
+        </tbody>
+      </table>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
