@@ -52,3 +52,14 @@ def test_filter_by_item_id_uses_correct_field() -> None:
     assert filtered2[0].item_id == 30
     assert filtered2[0].learner_id == 30
     
+def test_filter_excludes_interaction_with_different_learner_id() -> None:
+    """Test that filtering by item_id correctly excludes interactions with different item_id."""
+    interactions = [
+        _make_log(id=1, learner_id=10, item_id=20),
+        _make_log(id=2, learner_id=20, item_id=10),
+        _make_log(id=3, learner_id=30, item_id=30)
+    ]
+    filtered = _filter_by_item_id(interactions, 20)
+    assert len(filtered) == 1
+    assert filtered[0].id == 1
+    assert filtered[0].item_id == 20
