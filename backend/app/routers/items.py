@@ -1,8 +1,8 @@
-"""Router for item endpoints — reference implementation."""
+"""Router for item endpoints."""
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
-from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.database import get_session
 from app.db.items import create_item, read_item, read_items, update_item
@@ -13,15 +13,15 @@ router = APIRouter()
 
 @router.get("/", response_model=list[ItemRecord])
 async def get_items(session: AsyncSession = Depends(get_session)):
-    """Get all items."""
+    """Get all items (with trailing slash)."""
     return await read_items(session)
 
-@router.get("")  # этот обрабатывает /items без слеша
-async def get_items_alt(
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(verify_api_key)
-):
-    return await get_items(db, current_user)  # вызываем ту же функцию
+
+@router.get("", response_model=list[ItemRecord])
+async def get_items_no_slash(session: AsyncSession = Depends(get_session)):
+    """Get all items (without trailing slash)."""
+    return await read_items(session)
+
 
 @router.get("/{item_id}", response_model=ItemRecord)
 async def get_item(item_id: int, session: AsyncSession = Depends(get_session)):
