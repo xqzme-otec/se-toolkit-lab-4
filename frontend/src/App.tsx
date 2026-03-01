@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
-const API_BASE_URL = import.meta.env.VITE_API_TARGET || '/api';
+const API_BASE_URL = import.meta.env.VITE_API_TARGET || '';
 
 function App() {
   const [token, setToken] = useState('');
