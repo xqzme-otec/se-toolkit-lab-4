@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-
+interface Item {
+  id: number;
+  title: string;
+  description: string;
+  type: string;
+}
 const API_BASE_URL = import.meta.env.VITE_API_TARGET || '';
 
 function App() {
   const [token, setToken] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState<Item[]>([]);
   const [error, setError] = useState('');
 
   const handleConnect = async () => {
