@@ -63,3 +63,15 @@ def test_filter_excludes_interaction_with_different_learner_id() -> None:
     assert len(filtered) == 1
     assert filtered[0].id == 1
     assert filtered[0].item_id == 20
+
+def test_filter_by_item_id_zero() -> None:
+    """Test filtering by item_id=0 (boundary: zero is falsy but valid)."""
+    interactions = [
+        _make_log(id=1, learner_id=1, item_id=0),
+        _make_log(id=2, learner_id=2, item_id=1),
+        _make_log(id=3, learner_id=3, item_id=0),
+    ]
+    result = _filter_by_item_id(interactions, 0)
+    assert len(result) == 2
+    assert all(i.item_id == 0 for i in result)
+    assert {i.id for i in result} == {1, 3}
